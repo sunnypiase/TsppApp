@@ -14,7 +14,7 @@ namespace TsppAPI.Models
         public override bool Equals(object? obj)
         {
             Product? product = obj as Product;
-            
+
             return product is not null &&
                    Id == product.Id &&
                    Name == product.Name &&
@@ -29,7 +29,7 @@ namespace TsppAPI.Models
             return Id.GetHashCode();
         }
     }
-    public class ProductDto: IDto<Product>
+    public class ProductDto : IDto<Product>
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
