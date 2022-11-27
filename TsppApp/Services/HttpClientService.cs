@@ -7,10 +7,11 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using TsppAPI.Models;
 using TsppApp.Models;
+using TsppApp.Services.Abstract;
 
 namespace TsppApp.Services
 {
-    internal class HttpClientService
+    internal class HttpClientService : IHttpClientService
     {
         static readonly HttpClient client = new()
         {

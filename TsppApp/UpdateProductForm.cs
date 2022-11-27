@@ -9,17 +9,18 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using TsppAPI.Models;
 using TsppApp.Services;
+using TsppApp.Services.Abstract;
 
 namespace TsppApp
 {
     internal partial class ProductActionForm : Form
     {
-        private readonly HttpClientService _httpClientService;
+        private readonly IHttpClientService _httpClientService;
         private Product _inputProduct;
         public ProductDto Result { get; set; }
         ICollection<ProductType>? allTypes;
 
-        public ProductActionForm(in HttpClientService httpClientService)
+        public ProductActionForm(in IHttpClientService httpClientService)
         {
             InitializeComponent();
             _httpClientService = httpClientService;

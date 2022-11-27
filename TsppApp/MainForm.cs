@@ -1,12 +1,13 @@
 using TsppAPI.Models;
 using TsppApp.Services;
+using TsppApp.Services.Abstract;
 using TsppApp.ViewModel;
 
 namespace TsppApp
 {
     public partial class MainForm : Form
     {
-        private readonly HttpClientService _httpClient = new();
+        private readonly IHttpClientService _httpClient = new HttpClientService();
 
         public MainForm()
         {
