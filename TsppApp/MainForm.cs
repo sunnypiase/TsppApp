@@ -2,61 +2,112 @@ using TsppAPI.Models;
 using TsppApp.Services;
 using TsppApp.Services.Abstract;
 using TsppApp.ViewModel;
+using TsppApp.ViewModel.Abstract;
 
 namespace TsppApp
 {
     public partial class MainForm : Form
     {
         private readonly IHttpClientService _httpClient = new HttpClientService();
-
+        private readonly ITableViewConverter<Product, ProductViewModel> _tableViewConverter = new ProductViewModelConverter();
+        private readonly ProductActionForm _actionForm;
         public MainForm()
         {
             InitializeComponent();
+            _actionForm = new(_httpClient);
             poductDataGrid.AutoGenerateColumns = true;
             poductDataGrid.SelectionChanged += (sender, args) => OnSelectedChangedAction(sender, args);
-            UpdateTable();
+            try
+            {
+                UpdateTable();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void OnSelectedChangedAction(object sender, EventArgs e)
         {
-            bool isEnabled = (sender as DataGridView)?.SelectedRows.Count == 1;
-            DeleteProductBtn.Enabled = isEnabled;
-            UpdateProductBtn.Enabled = isEnabled;
+            try
+            {
+                bool isEnabled = (sender as DataGridView)?.SelectedRows.Count == 1;
+
+                DeleteProductBtn.Enabled = isEnabled;
+                UpdateProductBtn.Enabled = isEnabled;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
         private async Task UpdateTable()
         {
-            var getProductResponse = await _httpClient.GetAsync<Product>();
-            poductDataGrid.DataSource = new ProductViewModelConverter().Convert(getProductResponse);
-            poductDataGrid.Update();
+            try
+            {
+                var getProductResponse = await _httpClient.GetAsync<Product>();
+
+                poductDataGrid.DataSource = _tableViewConverter.Convert(getProductResponse);
+
+                poductDataGrid.Update();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
         private async void UpdateProductAction()
         {
-            var productViewModel = poductDataGrid.CurrentRow.DataBoundItem as ProductViewModel;
-            var actWind = new ProductActionForm(_httpClient);
-            actWind.UpdateProduct(productViewModel.GetBaseModel());
-            actWind.ShowDialog();
-            var result = await _httpClient.PutAsync<Product, ProductDto>(actWind.Result);
-            await UpdateTable();
+            try
+            {
+                var product = (poductDataGrid.CurrentRow.DataBoundItem as ProductViewModel)?.GetBaseModel();
+
+                _actionForm.UpdateProduct(product);
+                _actionForm.ShowDialog();
+
+                await _httpClient.PutAsync<Product, ProductDto>(_actionForm.Result);
+
+                await UpdateTable();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
         private async void AddProductAction()
         {
-            var actWind = new ProductActionForm(_httpClient);
-            actWind.AddProduct();
-            actWind.ShowDialog();
-            var result = await _httpClient.PostAsync<Product, ProductDto>(actWind.Result);
-            await UpdateTable();
+            try
+            {
+                _actionForm.AddProduct();
+                _actionForm.ShowDialog();
+
+                await _httpClient.PostAsync<Product, ProductDto>(_actionForm.Result);
+
+                await UpdateTable();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
         private async void DeleteProductAction()
         {
-            var productViewModel = poductDataGrid.CurrentRow.DataBoundItem as ProductViewModel;
-            await _httpClient.DeleteAsync<Product>(productViewModel.GetBaseModel().Id);
-            await UpdateTable();
+            try
+            {
+                var product = (poductDataGrid.CurrentRow.DataBoundItem as IViewModel<Product>)?.GetBaseModel();
+
+                await _httpClient.DeleteAsync<Product>(product.Id);
+
+                await UpdateTable();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void DeleteProductBtn_Click(object sender, EventArgs e) => DeleteProductAction();
-
         private void UpdateProductBtn_Click(object sender, EventArgs e) => UpdateProductAction();
-
         private void AddProductBtn_Click(object sender, EventArgs e) => AddProductAction();
         private void getProductsBtn_Click(object sender, EventArgs e) => UpdateTable();
 
