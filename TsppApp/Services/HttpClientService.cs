@@ -2,6 +2,7 @@
 using System.Net.Http.Json;
 using TsppAPI.Models;
 using TsppApp.Models;
+using TsppApp.Models.Filters;
 using TsppApp.Services.Abstract;
 
 namespace TsppApp.Services
@@ -53,6 +54,37 @@ namespace TsppApp.Services
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<TModel>(responseBody);
+        }
+        public async Task<bool> AuthorizeUser(AuthorizationDto authorizationDto)
+        {
+            HttpResponseMessage response = await client.PostAsJsonAsync("Authorization", authorizationDto);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<ICollection<TModel>> GetFilteredAsync<TModel, TFilter>(TFilter filter)
+            where TModel : class, IEntity
+            where TFilter : class, IFilter<TModel>
+        {
+            HttpResponseMessage response = await client.PostAsJsonAsync($"{typeof(TModel).Name}\\Filter", filter);
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ICollection<TModel>>(responseBody);
+        }
+        public async Task<int> GetAmountAsync<TModel>()
+            where TModel : class, IEntity
+        {
+            HttpResponseMessage response = await client.GetAsync($"{typeof(TModel).Name}\\Amount");
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<int>(responseBody);
+        }
+
+        public async Task<double> GetMatrixDetermenantAsync<TModel>(MatrixDto matrixDto)
+        {
+            HttpResponseMessage response = await client.PostAsJsonAsync($"{typeof(TModel).Name}\\Matrix", matrixDto.Matrix);
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<double>(responseBody);
         }
     }
 }

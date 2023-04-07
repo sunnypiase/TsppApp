@@ -1,4 +1,5 @@
 using TsppAPI.Models;
+using TsppApp.Models.Filters;
 using TsppApp.Services;
 using TsppApp.Services.Abstract;
 using TsppApp.ViewModel;
@@ -35,6 +36,7 @@ namespace TsppApp
 
                 DeleteProductBtn.Enabled = isEnabled;
                 UpdateProductBtn.Enabled = isEnabled;
+                GetProductDtermBtn.Enabled = isEnabled;
             }
             catch (Exception ex)
             {
@@ -44,8 +46,20 @@ namespace TsppApp
         private async Task UpdateTable()
         {
             try
-            {
-                var getProductResponse = await _httpClient.GetAsync<Product>();
+            {              
+                var getProductResponse = new List<Product>();
+
+
+                if (!string.IsNullOrEmpty(priceFilterTextBox.Text) && double.TryParse(priceFilterTextBox.Text, out double filterPrice))
+                {
+                    getProductResponse = (await _httpClient.GetFilteredAsync<Product, ProductFilter>(new ProductFilter() { price = filterPrice })).ToList();
+                }
+                else
+                {
+                    getProductResponse = (await _httpClient.GetAsync<Product>()).ToList();
+                }
+
+                this.productPrecentageTextBox.Text = (getProductResponse.Count() / (double)(await _httpClient.GetAmountAsync<Product>()) * 100).ToString();
 
                 poductDataGrid.DataSource = _tableViewConverter.Convert(getProductResponse);
 
@@ -68,6 +82,25 @@ namespace TsppApp
                 await _httpClient.PutAsync<Product, ProductDto>(_actionForm.Result);
 
                 await UpdateTable();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+        private async void GetProductDeterm()
+        {
+            try
+            {
+                var product = (poductDataGrid.CurrentRow.DataBoundItem as ProductViewModel)?.GetBaseModel();
+
+                List<List<double>> matrix = new()
+                {
+                    new() { product.Price, product.Amount },
+                    new() { product.Weight, product.Types.Select(x=>x.Id).Sum() }
+                };
+                var res = await _httpClient.GetMatrixDetermenantAsync<Product>(new Models.MatrixDto() { Matrix = matrix });
+                MessageBox.Show($"determ: {res}");
             }
             catch (Exception ex)
             {
@@ -111,5 +144,6 @@ namespace TsppApp
         private void AddProductBtn_Click(object sender, EventArgs e) => AddProductAction();
         private void getProductsBtn_Click(object sender, EventArgs e) => UpdateTable();
 
+        private void button1_Click(object sender, EventArgs e) => GetProductDeterm();
     }
 }
